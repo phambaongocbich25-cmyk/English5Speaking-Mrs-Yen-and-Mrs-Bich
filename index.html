@@ -1,0 +1,127 @@
+<script>
+/* ===================== DOM ===================== */
+const btnUnit = document.getElementById("btnUnit");
+const btnFree = document.getElementById("btnFree");
+const unitSection = document.getElementById("unitSection");
+const freeSection = document.getElementById("freeSection");
+const sampleTxt = document.getElementById("sampleTxt");
+const fbContent = document.getElementById("fbContent");
+const cert = document.getElementById("cert");
+const cName = document.getElementById("cName");
+const cClass = document.getElementById("cClass");
+const cUnit = document.getElementById("cUnit");
+const cStars = document.getElementById("cStars");
+const nameInp = document.getElementById("nameInp");
+const classInp = document.getElementById("classInp");
+const recBtn = document.getElementById("recBtn");
+const output = document.getElementById("output");
+const sel = document.getElementById("unitSel");
+
+/* ===================== DATA ===================== */
+const lessons = {
+  1:{t:"Unit 1: All about me!",s:"I’m Hoang. I’m in class 5/3. I live in the countryside. My favourite colour is yellow. My favourite animal is a dolphin. My favourite food is a sandwich. My favourite sport is table tennis."},
+  2:{t:"Unit 2: Our homes",s:"I live in a flat. My address is 65 Le Loi Street. It is a big and modern building in the city."},
+  3:{t:"Unit 3: My foreign friends",s:"He is Vietnamese. She is American. He is active and friendly. She is clever and helpful."},
+  4:{t:"Unit 4: Our free-time activities",s:"I like watering the flowers and playing the violin in my free time. At the weekend, I always read books and surf the Internet."},
+  5:{t:"Unit 5: My future job",s:"I’d like to be a teacher because I’d like to teach children. My brother wants to be a doctor to help people."},
+  6:{t:"Unit 6: Our school rooms",s:"The art room is on the second floor. Go past the library and turn right. It is very beautiful."},
+  7:{t:"Unit 7: Our favourite school activities",s:"He likes solving maths problems because it is interesting. We love doing school projects together."},
+  8:{t:"Unit 8: In our classroom",s:"The crayons are on the table. The glue sticks are beside the books. This pencil sharpener is mine."},
+  9:{t:"Unit 9: Our outdoor activities",s:"We were at the campsite last week. We danced around the campfire and watched the fish in the pond."},
+  10:{t:"Unit 10: Our school trip",s:"They went to Ba Na Hills last month. They visited the old buildings and took many beautiful photos."},
+  11:{t:"Unit 11: Family time",s:"I swam in the sea with my family. We took a boat trip around the bay and ate delicious seafood."},
+  12:{t:"Unit 12: Our Tet holiday",s:"I will make banh chung and decorate my house. I will visit my grandparents and get lucky money."},
+  13:{t:"Unit 13: Our special days",s:"On Children's Day, we will sing and dance. We will have pizza and milk tea at the party."},
+  14:{t:"Unit 14: Staying healthy",s:"She does yoga twice a week to stay healthy. She does morning exercise and eats healthy food."},
+  15:{t:"Unit 15: Our health",s:"I have a sore throat and a fever. You should go to the doctor and rinse your mouth with salt water."},
+  16:{t:"Unit 16: Seasons and the weather",s:"It is hot and sunny in summer. I usually wear a blouse and trousers. It is cold in winter."},
+  17:{t:"Unit 17: Stories for children",s:"The fox is clever and the crow is greedy. The tortoise ran fast and worked hard to win the race."},
+  18:{t:"Unit 18: Means of transport",s:"I want to visit Dragon Bridge. You can get there by bus or by taxi. It is fantastic."},
+  19:{t:"Unit 19: Places of interest",s:"I think Hoi An Old Town is peaceful. It is about twenty-nine kilometres from Da Nang."},
+  20:{t:"Unit 20: Our summer holidays",s:"I am going to visit Phong Nha Cave this summer. I am going to go camping and join a music club."}
+};
+
+/* ===================== INIT ===================== */
+let currentMode = "unit";
+for(let i=1;i<=20;i++){
+  sel.innerHTML += `<option value="${i}">${lessons[i].t}</option>`;
+}
+changeUnit();
+
+/* ===================== MODE ===================== */
+function setMode(m){
+  currentMode = m;
+  btnUnit.classList.toggle("active", m==="unit");
+  btnFree.classList.toggle("active", m==="free");
+  unitSection.style.display = m==="unit" ? "block" : "none";
+  freeSection.style.display = m==="free" ? "block" : "none";
+  cert.style.display = "none";
+  fbContent.innerText = "Đang đợi con luyện tập...";
+}
+
+/* ===================== UNIT ===================== */
+function changeUnit(){
+  sampleTxt.innerText = lessons[sel.value].s;
+  cert.style.display = "none";
+}
+
+/* ===================== VOICE ===================== */
+function playVoice(text){
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = "en-GB";
+  u.rate = 0.85;
+  window.speechSynthesis.speak(u);
+}
+
+/* ===================== SPEECH ===================== */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = SR ? new SR() : null;
+
+if(rec){
+  rec.lang="en-US";
+  rec.onresult=e=>{
+    const said = e.results[0][0].transcript;
+    output.value = said;
+    recBtn.innerText="🎙️ NHẤN ĐỂ BẮT ĐẦU NÓI";
+    currentMode==="unit"?analyzeUnit(said):analyzeFree(said);
+  };
+}
+
+function startRec(){
+  if(!rec){ alert("Trình duyệt chưa hỗ trợ nói"); return; }
+  recBtn.innerText="🔴 CÔ ĐANG NGHE...";
+  rec.start();
+}
+
+/* ===================== ANALYZE ===================== */
+function analyzeUnit(said){
+  let s = lessons[sel.value].s.toLowerCase().replace(/[.,!]/g,"").split(" ");
+  let i = said.toLowerCase().replace(/[.,!]/g,"").split(" ");
+  let html="", miss=0;
+
+  s.forEach(w=>{
+    if(i.includes(w)) html+=`<span class="correct">${w}</span> `;
+    else{ html+=`<span class="fix" onclick="playVoice('${w}')">${w}</span> `; miss++; }
+  });
+
+  fbContent.innerHTML = `<p><b>Bấm từ màu cam để nghe sửa lỗi</b></p><p>${html}</p>`;
+  showCert(miss===0?5:miss<4?4:3, lessons[sel.value].t);
+}
+
+function analyzeFree(said){
+  fbContent.innerHTML = `<p><b>Cô nghe được:</b> "${said}"</p>`;
+  playVoice(said);
+  showCert(5,"Free Speaking Star");
+}
+
+/* ===================== CERT ===================== */
+function showCert(stars,title){
+  cName.innerText = nameInp.value || "Super Star";
+  cClass.innerText = classInp.value || "5/...";
+  cUnit.innerText = title;
+  cStars.innerText = "⭐".repeat(stars);
+  cert.style.display="block";
+  cert.scrollIntoView({behavior:"smooth"});
+}
+</script>
